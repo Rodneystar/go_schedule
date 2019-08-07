@@ -1,0 +1,11 @@
+data:
+  build: .
+  volumes:
+    - .:/go/src/go_schedule.go
+  command: 'true'
+
+test:
+  build: .
+  volumes_from:
+    - data
+  command: gomon -t
