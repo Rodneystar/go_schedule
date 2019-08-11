@@ -1,7 +1,7 @@
 data:
   build: .
   volumes:
-    - .:/go/src/go_schedule.go
+    - .:/go/src/go_schedule
   command: 'true'
 
 test:
@@ -9,3 +9,18 @@ test:
   volumes_from:
     - data
   command: gomon -t
+
+build:
+  build: .
+  working_dir: /go/src/go_schedule
+  volumes_from:
+    - data
+  command: gomon . -- go build 
+
+run:
+  build: .
+  volumes_from:
+    - data
+  command: gomon src/go_schedule -- src/go_schedule/goSched.exe
+
+
