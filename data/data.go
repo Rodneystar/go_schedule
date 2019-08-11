@@ -3,6 +3,7 @@ package data
 import (
 	"encoding/json"
 	"io/ioutil"
+	"os"
 	"time"
 )
 
@@ -14,6 +15,7 @@ type TimerEventDescription struct {
 type DataAccess interface {
 	GetAllTimers() ([]TimerEventDescription, error)
 	AddTimer(TimerEventDescription) error
+	DelAll() error
 }
 
 func NewDataAccess() DataAccess {
@@ -26,7 +28,22 @@ type FileAccess struct {
 	filename string
 }
 
+func (da *FileAccess) DelAll() error {
+	da.createIfNotExist()
+	empty, err := toJSONArr(make([]TimerEventDescription, 0))
+	if err != nil {
+		return err
+	}
+	ioutil.WriteFile(da.filename, empty, 0644)
+	return nil
+}
+func (da *FileAccess) createIfNotExist() {
+	if _, err := os.Stat(da.filename); os.IsNotExist(err) {
+		os.Create(da.filename)
+	}
+}
 func (da *FileAccess) GetAllTimers() ([]TimerEventDescription, error) {
+	da.createIfNotExist()
 	jsonIn, err := ioutil.ReadFile(da.filename)
 	if err != nil {
 		return nil, err

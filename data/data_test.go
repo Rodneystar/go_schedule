@@ -7,25 +7,49 @@ import (
 	"time"
 )
 
-func Test_getAllTimers(t *testing.T) {
-	now := time.Now()
-	event := TimerEventDescription{
+var now = time.Now()
+var events = []TimerEventDescription{
+	TimerEventDescription{
 		AtTime: now,
 		State:  true,
-	}
-
-	event2 := TimerEventDescription{
+	}, TimerEventDescription{
 		AtTime: now.Add(-time.Hour * 2),
 		State:  false,
-	}
-	events := []TimerEventDescription{event, event2}
+	},
+}
+
+func Test_Add(t *testing.T) {
+	data
+}
+func Test_delall(t *testing.T) {
+
+}
+func Test_getAllTimers(t *testing.T) {
+
+	now := time.Now()
+
 	_ = events
 	data := NewDataAccess()
+	data.DelAll()
 
 	data.AddTimer(event)
+
 	allTimers, _ := data.GetAllTimers()
 	result := allTimers[0].AtTime
-	if result != now {
+	if !result.Equal(now) {
+		t.Errorf("expected %s, was: %s", now, result)
+	}
+
+	data.AddTimer(event2)
+	allTimers, _ = data.GetAllTimers()
+	length := len(allTimers)
+	if length != 2 {
+		t.Errorf("expected length 2, was %d", length)
+	}
+
+	allTimers, _ = data.GetAllTimers()
+	result = allTimers[1].AtTime
+	if !result.Equal(now.Add(-time.Hour * 2)) {
 		t.Errorf("expected %s, was: %s", now, result)
 	}
 
