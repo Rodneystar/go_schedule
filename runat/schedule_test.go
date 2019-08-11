@@ -7,12 +7,27 @@ import (
 )
 
 func Test_ScheduleAt(t *testing.T) {
-	future := ScheduleAt(time.Now().Add(time.Second * 5))
-	t.Logf("ScheduleAt(now ): %t", <-future)
+	count := 0
+	_ = ScheduleAt(time.Now().Add(time.Second*3), func() {
+		fmt.Println("action happening")
+		count++
+	})
+
+	time.Sleep(2 * time.Second)
+	if count != 0 {
+		t.Error("should be 0, is: ", count)
+	}
+
+	time.Sleep(2 * time.Second)
+	if count != 1 {
+		t.Error("should be 1, is: ", count)
+	}
+	time.Sleep(2 * time.Second)
 }
 
 func Test_ScheduleEvery(t *testing.T) {
 	count := 0
+	fmt.Println("starting")
 	stop := ScheduleEvery(1*time.Second, func() {
 		count++
 		fmt.Println("actiosn: ", count)
