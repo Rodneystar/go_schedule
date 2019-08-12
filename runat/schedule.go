@@ -5,23 +5,16 @@ import (
 )
 
 func ScheduleAt(atTime time.Time, action func()) chan<- bool {
-	until := time.Until(atTime)
-	tick := make(chan time.Time)
-	stop := make(chan bool)
-	go func() {
-		time.Sleep(until)
-		tick <- time.Now()
-	}()
+	timer, stop := getInitDelayChan(time.Until(atTime))
 	go func() {
 		for {
 			select {
-			case <-tick:
+			case <- timer.C:
 				action()
-				close(tick)
 				return
 			case <-stop:
 				close(stop)
-				close(tick)
+				timer.Stop()
 				return
 			}
 		}
@@ -30,43 +23,47 @@ func ScheduleAt(atTime time.Time, action func()) chan<- bool {
 }
 
 func ScheduleEvery(duration time.Duration, action func()) chan<- bool {
-	ticker := time.NewTicker(duration)
-	stop := make(chan bool)
+	return scheduleEveryAfterDelay(0, duration, action)
+}
 
+func ScheduleEveryAfterDelay(initDelay time.Duration, period time.Duration, action func()) chan<- bool {
+		return scheduleEveryAfterDelay(initDelay, period, action)
+}
+
+func scheduleEveryAfterDelay(initDelay time.Duration, period time.Duration, action func()) chan<- bool {
+	timer, stop := getInitDelayChan(initDelay)
 	go func() {
 		for {
 			select {
 			case <-stop:
-				ticker.Stop()
+				timer.Stop()
 				close(stop)
 				return
-			case <-ticker.C:
-				action()
+			case <-timer.C:
+				go func() {
+					ticker := time.NewTicker(period)
+					for {
+						select {
+						case <-ticker.C:
+							action()
+						case <-stop:
+							ticker.Stop()
+							return
+						}
+					}
+				}()
+
 			}
+
 		}
 	}()
 	return stop
 }
 
-func ScheduleEveryAfterDelay(initDelay time.Duration, period time.Duration, action func()) chan<- bool {
-	var ticker *time.Ticker
+func getInitDelayChan(delay time.Duration) ( *time.Timer, chan bool) {
+	alarmRinging := time.NewTimer(delay)
 	stop := make(chan bool)
 
-	go func() {
-		time.Sleep(initDelay)
-		ticker = time.NewTicker(period)
-		go func() {
-			for {
-				select {
-				case <-stop:
-					ticker.Stop()
-					close(stop)
-					return
-				case <-ticker.C:
-					action()
-				}
-			}
-		}()
-	}()
-	return stop
+	return alarmRinging, stop
 }
+

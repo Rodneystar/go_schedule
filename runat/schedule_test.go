@@ -18,11 +18,47 @@ func Test_ScheduleAt(t *testing.T) {
 		t.Error("should be 0, is: ", count)
 	}
 
+	//stop <- true
+
 	time.Sleep(2 * time.Second)
 	if count != 1 {
 		t.Error("should be 1, is: ", count)
 	}
 	time.Sleep(2 * time.Second)
+}
+
+
+func Test_ScheduleEveryAfterDelay( t *testing.T) {
+	fmt.Println("starting --")
+	stop := ScheduleEveryAfterDelay(time.Second*5, time.Second, func() {
+		fmt.Println("we are running ")
+	})
+	fmt.Println("sent the stop --")
+	stop <- true
+	time.Sleep(8* time.Second)
+	time.Sleep(10*time.Second)
+}
+
+
+func Test_ScheduleEveryAfterDelayMultiple( t *testing.T) {
+	fmt.Println("starting --")
+	stop := ScheduleEveryAfterDelay(time.Millisecond*500, time.Second, func() {
+		fmt.Println("we are running 1st")
+	})
+
+	stop2 := ScheduleEveryAfterDelay(time.Millisecond* 1000, time.Second, func() {
+		fmt.Println("we are running 2nd")
+
+	})
+	time.Sleep(4* time.Second)
+	stop <- true
+
+	time.Sleep(3950* time.Millisecond)
+	fmt.Println("sent the stop --")
+
+	stop2 <- true
+
+	time.Sleep(5*time.Second)
 }
 
 func Test_ScheduleEvery(t *testing.T) {
@@ -49,7 +85,7 @@ func Test_ScheduleEvery(t *testing.T) {
 	}
 
 	time.Sleep(time.Second * 4)
-	fmt.Println("not sending stop false")
+	fmt.Println("sending stop false")
 	stop <- false
 	time.Sleep(6 * time.Second)
 }
