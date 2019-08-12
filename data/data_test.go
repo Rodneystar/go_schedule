@@ -19,20 +19,28 @@ var events = []TimerEventDescription{
 }
 
 func Test_Add(t *testing.T) {
-	data
+	data := NewDataAccess()
+	data.AddTimer(events[0])
+	persistedEvents, _ := data.GetAllTimers()
+	if noOfEvents := len(persistedEvents); noOfEvents != 1 {
+		t.Errorf("expected length 1, was: %d", noOfEvents)
+	}
 }
 func Test_delall(t *testing.T) {
-
+	data := NewDataAccess()
+	data.AddTimer(events[0])
+	data.AddTimer(events[1])
+	data.DelAll()
+	persistedEvents, _ := data.GetAllTimers()
+	if noOfEvents := len(persistedEvents); noOfEvents != 0 {
+		t.Errorf("expected length 1, was: %d", noOfEvents)
+	}
 }
 func Test_getAllTimers(t *testing.T) {
 
-	now := time.Now()
-
-	_ = events
 	data := NewDataAccess()
 	data.DelAll()
-
-	data.AddTimer(event)
+	data.AddTimer(events[0])
 
 	allTimers, _ := data.GetAllTimers()
 	result := allTimers[0].AtTime
@@ -40,7 +48,7 @@ func Test_getAllTimers(t *testing.T) {
 		t.Errorf("expected %s, was: %s", now, result)
 	}
 
-	data.AddTimer(event2)
+	data.AddTimer(events[1])
 	allTimers, _ = data.GetAllTimers()
 	length := len(allTimers)
 	if length != 2 {
