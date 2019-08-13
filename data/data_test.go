@@ -2,6 +2,7 @@ package data
 
 import (
 	"io/ioutil"
+	"os"
 
 	"testing"
 	"time"
@@ -85,4 +86,7 @@ func Test_readFiles(t *testing.T) {
 	timerEvents := fromJSONArr(jsonIn)
 	t.Logf("time 1: %s, action1: %t", timerEvents[0].AtTime, timerEvents[0].State)
 
+}
+
+func Test_modes(t *testing.T) {
 }
