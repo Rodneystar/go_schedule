@@ -3,18 +3,20 @@ package data
 import (
 	"encoding/json"
 	"io/ioutil"
+	"log"
 	"os"
 	"time"
 )
 
-type TimerEventDescription struct {
-	AtTime time.Time `json: atTIme`
-	State  bool      `json: state`
+type TimerActiveSpan struct {
+	AtTime time.Time 		`json: "atTime"`
+	Duration time.Duration 	`json: "duration"`
 }
 
 type DataAccess interface {
-	GetAllTimers() ([]TimerEventDescription, error)
-	AddTimer(TimerEventDescription) error
+	GetAllTimers() ([]TimerActiveSpan, error)
+	AddTimer(TimerActiveSpan) error
+	RemoveByAtTime( time.Time) error
 	DelAll() error
 }
 
@@ -28,22 +30,68 @@ type FileAccess struct {
 	filename string
 }
 
-func (da *FileAccess) DelAll() error {
-	da.createIfNotExist()
-	empty, err := toJSONArr(make([]TimerEventDescription, 0))
+
+func(da *FileAccess) RemoveByAtTime(t time.Time) error {
+	timers, _ := da.GetAllTimers()
+	var tIdx int
+	for i, e := range timers {
+		if e.AtTime.Equal(t) {
+			tIdx = i
+		}
+	}
+
+	firstPart := timers[0:tIdx]
+	secondPart := timers[tIdx+1:]
+
+	encoded, err := toJSONArr(append(firstPart, secondPart...))
 	if err != nil {
 		return err
 	}
-	ioutil.WriteFile(da.filename, empty, 0644)
+
+	err  = ioutil.WriteFile(da.filename, encoded, 0644)
+	if err != nil {
+		return err
+	}
 	return nil
+
 }
-func (da *FileAccess) createIfNotExist() {
-	if _, err := os.Stat(da.filename); os.IsNotExist(err) {
-		os.Create(da.filename)
+
+func(da *FileAccess) Init(filename string) {
+	da.filename = filename
+	err := da.createIfNotExist()
+	if err != nil {
+		log.Fatalf("%s -- error creating file if doesnt exist: %s", time.Now(), err)
 	}
 }
-func (da *FileAccess) GetAllTimers() ([]TimerEventDescription, error) {
-	da.createIfNotExist()
+
+func (da *FileAccess) DelAll() error {
+	empty, err := toJSONArr(make([]TimerActiveSpan, 0))
+	if err != nil {
+		return err
+	}
+
+	err = ioutil.WriteFile(da.filename, empty, 0644)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (da *FileAccess) createIfNotExist() error {
+	if _, err := os.Stat(da.filename); os.IsNotExist(err) {
+		file, err := os.Create(da.filename)
+		if err != nil {
+			return err
+		}
+		err = file.Close()
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (da *FileAccess) GetAllTimers() ([]TimerActiveSpan, error) {
 	jsonIn, err := ioutil.ReadFile(da.filename)
 	if err != nil {
 		return nil, err
@@ -51,7 +99,7 @@ func (da *FileAccess) GetAllTimers() ([]TimerEventDescription, error) {
 	return fromJSONArr(jsonIn), nil
 }
 
-func (da *FileAccess) AddTimer(t TimerEventDescription) error {
+func (da *FileAccess) AddTimer(t TimerActiveSpan) error {
 	currTimers, err := da.GetAllTimers()
 	if err != nil {
 		return err
@@ -65,7 +113,7 @@ func (da *FileAccess) AddTimer(t TimerEventDescription) error {
 	return ioutil.WriteFile(da.filename, encodedTimers, 0644)
 }
 
-func toJSON(event TimerEventDescription) ([]byte, error) {
+func toJSON(event TimerActiveSpan) ([]byte, error) {
 	bytes, err := json.MarshalIndent(event, "", "\t")
 	if err != nil {
 		return nil, err
@@ -73,7 +121,7 @@ func toJSON(event TimerEventDescription) ([]byte, error) {
 	return bytes, nil
 }
 
-func toJSONArr(event []TimerEventDescription) ([]byte, error) {
+func toJSONArr(event []TimerActiveSpan) ([]byte, error) {
 	bytes, err := json.MarshalIndent(event, "", "\t")
 	if err != nil {
 		return nil, err
@@ -81,8 +129,8 @@ func toJSONArr(event []TimerEventDescription) ([]byte, error) {
 	return bytes, nil
 }
 
-func fromJSONArr(jsonArr []byte) []TimerEventDescription {
-	var timerEvent []TimerEventDescription
+func fromJSONArr(jsonArr []byte) []TimerActiveSpan {
+	var timerEvent []TimerActiveSpan
 	json.Unmarshal(jsonArr, &timerEvent)
 	return timerEvent
 }

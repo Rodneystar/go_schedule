@@ -2,20 +2,18 @@ package data
 
 import (
 	"io/ioutil"
-	"os"
-
 	"testing"
 	"time"
 )
 
 var now = time.Now()
-var events = []TimerEventDescription{
-	TimerEventDescription{
+var events = []TimerActiveSpan{
+	TimerActiveSpan{
 		AtTime: now,
-		State:  true,
-	}, TimerEventDescription{
+		Duration: time.Second * 2,
+	}, TimerActiveSpan{
 		AtTime: now.Add(-time.Hour * 2),
-		State:  false,
+		Duration: time.Second * 2,
 	},
 }
 
@@ -66,11 +64,11 @@ func Test_getAllTimers(t *testing.T) {
 
 func Test_files(t *testing.T) {
 	now := time.Now()
-	event := TimerEventDescription{
+	event := TimerActiveSpan{
 		AtTime: now,
-		State:  true,
+		Duration: time.Second * 2,
 	}
-	arr := []TimerEventDescription{event}
+	arr := []TimerActiveSpan{event}
 
 	jsonEvent, _ := toJSONArr(arr)
 	ioutil.WriteFile("timers.dat", jsonEvent, 0644)
@@ -84,9 +82,21 @@ func Test_readFiles(t *testing.T) {
 	}
 
 	timerEvents := fromJSONArr(jsonIn)
-	t.Logf("time 1: %s, action1: %t", timerEvents[0].AtTime, timerEvents[0].State)
+	t.Logf("time 1: %s, action1: %s", timerEvents[0].AtTime, timerEvents[0].Duration.String())
 
 }
 
-func Test_modes(t *testing.T) {
+func Test_Remove(t *testing.T) {
+	data := NewDataAccess()
+	data.DelAll()
+	data.AddTimer(events[0])
+	data.AddTimer(events[1])
+	data.RemoveByAtTime(events[0].AtTime)
+
+	timers, _ := data.GetAllTimers()
+	length := len(timers)
+	if length != 1 {
+		t.Errorf("expected length 1, was %d", length)
+	}
+
 }
