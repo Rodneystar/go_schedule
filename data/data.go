@@ -5,18 +5,19 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"schedule/clock"
 	"time"
 )
 
 type TimerActiveSpan struct {
-	AtTime time.Time 		`json: "atTime"`
-	Duration time.Duration 	`json: "duration"`
+	AtTime   clock.Clock   `json: "atTime"`
+	Duration time.Duration `json: "duration"`
 }
 
 type DataAccess interface {
 	GetAllTimers() ([]TimerActiveSpan, error)
 	AddTimer(TimerActiveSpan) error
-	RemoveByAtTime( time.Time) error
+	RemoveByAtTime(clock.Clock) error
 	DelAll() error
 }
 
@@ -30,8 +31,7 @@ type FileAccess struct {
 	filename string
 }
 
-
-func(da *FileAccess) RemoveByAtTime(t time.Time) error {
+func (da *FileAccess) RemoveByAtTime(t clock.Clock) error {
 	timers, _ := da.GetAllTimers()
 	var tIdx int
 	for i, e := range timers {
@@ -48,7 +48,7 @@ func(da *FileAccess) RemoveByAtTime(t time.Time) error {
 		return err
 	}
 
-	err  = ioutil.WriteFile(da.filename, encoded, 0644)
+	err = ioutil.WriteFile(da.filename, encoded, 0644)
 	if err != nil {
 		return err
 	}
@@ -56,7 +56,7 @@ func(da *FileAccess) RemoveByAtTime(t time.Time) error {
 
 }
 
-func(da *FileAccess) Init(filename string) {
+func (da *FileAccess) Init(filename string) {
 	da.filename = filename
 	err := da.createIfNotExist()
 	if err != nil {

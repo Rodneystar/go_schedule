@@ -1,6 +1,7 @@
 package runat
 
 import (
+	"schedule/clock"
 	"time"
 )
 
@@ -9,7 +10,7 @@ func ScheduleAt(atTime time.Time, action func()) chan<- bool {
 	go func() {
 		for {
 			select {
-			case <- timer.C:
+			case <-timer.C:
 				action()
 				return
 			case <-stop:
@@ -27,7 +28,12 @@ func ScheduleEvery(duration time.Duration, action func()) chan<- bool {
 }
 
 func ScheduleEveryAfterDelay(initDelay time.Duration, period time.Duration, action func()) chan<- bool {
-		return scheduleEveryAfterDelay(initDelay, period, action)
+	return scheduleEveryAfterDelay(initDelay, period, action)
+}
+
+func EachDayAt(t clock.Clock, action func()) chan<- bool {
+	now := clock.NewClock(time.Now())
+	return scheduleEveryAfterDelay(now.Until(t), time.Hour*24, action)
 }
 
 func scheduleEveryAfterDelay(initDelay time.Duration, period time.Duration, action func()) chan<- bool {
@@ -60,10 +66,9 @@ func scheduleEveryAfterDelay(initDelay time.Duration, period time.Duration, acti
 	return stop
 }
 
-func getInitDelayChan(delay time.Duration) ( *time.Timer, chan bool) {
+func getInitDelayChan(delay time.Duration) (*time.Timer, chan bool) {
 	alarmRinging := time.NewTimer(delay)
 	stop := make(chan bool)
 
 	return alarmRinging, stop
 }
-

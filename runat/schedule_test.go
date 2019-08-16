@@ -2,6 +2,7 @@ package runat
 
 import (
 	"fmt"
+	"schedule/clock"
 	"testing"
 	"time"
 )
@@ -27,38 +28,36 @@ func Test_ScheduleAt(t *testing.T) {
 	time.Sleep(2 * time.Second)
 }
 
-
-func Test_ScheduleEveryAfterDelay( t *testing.T) {
+func Test_ScheduleEveryAfterDelay(t *testing.T) {
 	fmt.Println("starting --")
 	stop := ScheduleEveryAfterDelay(time.Second*5, time.Second, func() {
 		fmt.Println("we are running ")
 	})
 	fmt.Println("sent the stop --")
 	stop <- true
-	time.Sleep(8* time.Second)
-	time.Sleep(10*time.Second)
+	time.Sleep(8 * time.Second)
+	time.Sleep(10 * time.Second)
 }
 
-
-func Test_ScheduleEveryAfterDelayMultiple( t *testing.T) {
+func Test_ScheduleEveryAfterDelayMultiple(t *testing.T) {
 	fmt.Println("starting --")
 	stop := ScheduleEveryAfterDelay(time.Millisecond*500, time.Second, func() {
 		fmt.Println("we are running 1st")
 	})
 
-	stop2 := ScheduleEveryAfterDelay(time.Millisecond* 1000, time.Second, func() {
+	stop2 := ScheduleEveryAfterDelay(time.Millisecond*1000, time.Second, func() {
 		fmt.Println("we are running 2nd")
 
 	})
-	time.Sleep(4* time.Second)
+	time.Sleep(4 * time.Second)
 	stop <- true
 
-	time.Sleep(3950* time.Millisecond)
+	time.Sleep(3950 * time.Millisecond)
 	fmt.Println("sent the stop --")
 
 	stop2 <- true
 
-	time.Sleep(5*time.Second)
+	time.Sleep(5 * time.Second)
 }
 
 func Test_ScheduleEvery(t *testing.T) {
@@ -106,4 +105,15 @@ func Test_ticker(t *testing.T) {
 	}()
 
 	time.Sleep(10 * time.Second)
+}
+
+func Test_EachDayAt(t *testing.T) {
+	now := clock.Now()
+	hours, mins := now.GetHoursMins()
+	now.Set(hours, mins+1)
+	cancel := EachDayAt(*now, func() { fmt.Println("ticked") })
+
+	time.Sleep(65 * time.Second)
+	cancel <- true
+
 }

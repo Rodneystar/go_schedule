@@ -7,12 +7,13 @@ import (
 )
 
 var now = time.Now()
+
 var events = []TimerActiveSpan{
 	TimerActiveSpan{
-		AtTime: now,
+		AtTime:   now,
 		Duration: time.Second * 2,
 	}, TimerActiveSpan{
-		AtTime: now.Add(-time.Hour * 2),
+		AtTime:   now.Add(-time.Hour * 2),
 		Duration: time.Second * 2,
 	},
 }
@@ -25,8 +26,10 @@ func Test_Add(t *testing.T) {
 		t.Errorf("expected length 1, was: %d", noOfEvents)
 	}
 }
+
 func Test_delall(t *testing.T) {
 	data := NewDataAccess()
+	t.Error()
 	data.AddTimer(events[0])
 	data.AddTimer(events[1])
 	data.DelAll()
@@ -65,7 +68,7 @@ func Test_getAllTimers(t *testing.T) {
 func Test_files(t *testing.T) {
 	now := time.Now()
 	event := TimerActiveSpan{
-		AtTime: now,
+		AtTime:   now,
 		Duration: time.Second * 2,
 	}
 	arr := []TimerActiveSpan{event}
