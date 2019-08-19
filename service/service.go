@@ -1,4 +1,4 @@
-package main
+package service
 
 import (
 	"fmt"
@@ -45,9 +45,9 @@ func (t *TimerService) startTimers() {
 
 	i := 0
 	for _, e := range timers {
-		stopTime := e.AtTime.Add(e.Duration)
-		t.runningTimerStopChannels[i] = runat.EachDayAt(e.AtTime, t.switchable.Off)
-		t.runningTimerStopChannels[i+1] = runat.EachDayAt(e.AtTime, t.switchable.Off)
+		stopTime := *e.AtTime.Add(e.Duration)
+		t.runningTimerStopChannels[i] = runat.EachDayAt(e.AtTime, t.switchable.On)
+		t.runningTimerStopChannels[i+1] = runat.EachDayAt(stopTime, t.switchable.Off)
 		i += 2
 	}
 
@@ -70,7 +70,7 @@ func (t *TimerService) SetMode(mode TimerMode) {
 	}
 }
 
-func (t *TimerService) AddTimer(startTime time.Time, duration time.Duration) error {
+func (t *TimerService) AddTimer(startTime clock.Clock, duration time.Duration) error {
 	event := data.TimerActiveSpan{
 		AtTime:   startTime,
 		Duration: duration,
@@ -99,13 +99,6 @@ func (t *TimerService) GetAllTimers() []data.TimerActiveSpan {
 
 func (t *TimerService) Init(db data.DataAccess, switchable physical.Switchable) {
 	t.db, t.mode, t.switchable = db, ModeOff, switchable
-
-	timers, err := db.GetAllTimers()
-	if err != nil {
-		log("error retrieving timer list from db, initializing empty: %s", err)
-		t.timers = make([]TimerEvent, 0)
-	}
-	t.timers = timers
 }
 
 func (t *TimerService) off() {
@@ -120,8 +113,4 @@ func (t *TimerService) on() {
 func (t *TimerService) timed() {
 	t.startTimers()
 	//timed
-}
-
-func main() {
-
 }

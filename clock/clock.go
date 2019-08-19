@@ -26,19 +26,22 @@ func (c *Clock) Until(laterClock Clock) time.Duration {
 	return time.Duration(duration) * time.Minute
 }
 
-// Equals returns true if the clock times are equal
-func (c *Clock) Equals(c2 Clock) bool {
+// Equal returns true if the clock times are equal
+func (c *Clock) Equal(c2 Clock) bool {
 	return c.time == c2.time
 
 }
 
 // Add adds d duration to the clock, rolling back to the start if the result is past 23:59.
 // modifies the supplied reference value.
-func (c *Clock) Add(d time.Duration) {
+func (c *Clock) Add(d time.Duration) *Clock {
 	// mins := d / time.Minute
-	c.time += uint16(d / time.Minute)
-	if c.time > 1440 {
-		c.time -= 1440
+	sTime := c.time + uint16(d/time.Minute)
+	if sTime > 1440 {
+		sTime -= 1440
+	}
+	return &Clock{
+		time: sTime,
 	}
 }
 

@@ -2,18 +2,19 @@ package data
 
 import (
 	"io/ioutil"
+	"schedule/clock"
 	"testing"
 	"time"
 )
 
-var now = time.Now()
+var now = clock.NewClock(time.Now())
 
 var events = []TimerActiveSpan{
 	TimerActiveSpan{
-		AtTime:   now,
+		AtTime:   *now,
 		Duration: time.Second * 2,
 	}, TimerActiveSpan{
-		AtTime:   now.Add(-time.Hour * 2),
+		AtTime:   *now.Add(-time.Hour * 2),
 		Duration: time.Second * 2,
 	},
 }
