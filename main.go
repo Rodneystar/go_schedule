@@ -22,7 +22,26 @@ func main() {
 		json.Unmarshal(body, &nameR)
 		fmt.Printf("reqBody: %s\n", nameR.Name)
 	})
+	mux.HandleFunc("/mode", modeHandler)
 
 	http.ListenAndServe("0.0.0.0:8080", mux)
 
+}
+
+func modeHandler(res http.ResponseWriter, req *http.Request) {
+	switch req.Method {
+	case http.MethodGet:
+		getMode(res, req)
+	case http.MethodPut:
+		// putMode(res, req)
+	}
+}
+
+func getMode(res http.ResponseWriter, req *http.Request) {
+	headers := res.Header()
+	headers.Add("content-type", "application/json")
+	res.WriteHeader(200)
+	resBody := struct{ Mode bool }{Mode: true}
+	json, _ := json.Marshal(resBody)
+	res.Write(json)
 }
