@@ -6,8 +6,12 @@ import (
 	"net/http"
 )
 
+type modeResponse struct{ Mode bool }
+
+
 func main() {
 
+	service := 
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("/", func(res http.ResponseWriter, req *http.Request) {
@@ -33,15 +37,25 @@ func modeHandler(res http.ResponseWriter, req *http.Request) {
 	case http.MethodGet:
 		getMode(res, req)
 	case http.MethodPut:
-		// putMode(res, req)
+		putMode(res, req)
 	}
 }
 
+func putmode( res http.ResponseWriter, req *http.Request ) {
+	writeHeaders(res)
+	resBody := &modeResponse{Mode: true}
+	
+}
+
 func getMode(res http.ResponseWriter, req *http.Request) {
+	writeHeaders(res)
+	resBody := &modeResponse{Mode: true}
+	json, _ := json.Marshal(resBody)
+	res.Write(json)
+}
+ 
+func writeHeaders(res http.ResponseWriter) {
 	headers := res.Header()
 	headers.Add("content-type", "application/json")
 	res.WriteHeader(200)
-	resBody := struct{ Mode bool }{Mode: true}
-	json, _ := json.Marshal(resBody)
-	res.Write(json)
 }
