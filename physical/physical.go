@@ -14,16 +14,23 @@ type fakeSwitchable struct {
 	Active bool
 }
 
-func (s *fakeSwitchable) On() {
-	fmt.Println("---ON---")
+func NewFakeSwitchable(initState bool) Switchable {
+	return &fakeSwitchable{ Active: false}
 }
+
 func (s *fakeSwitchable) Off() {
 	fmt.Println("---OFF---")
 }
 
+func (s *fakeSwitchable) On() {
+	fmt.Println("---ON---")
+}
+
+
 func (s *fakeSwitchable) State() bool {
 	return s.Active
 }
+
 
 type radioPiHatPlug struct {
 	active bool

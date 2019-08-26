@@ -32,6 +32,10 @@ type TimerService struct {
 	switchable               physical.Switchable
 }
 
+func (t *TimerService) GetMode() TimerMode {
+	return t.mode
+}
+
 func (t *TimerService) cycleTimers() {
 	t.stopTimers()
 	t.startTimers()
@@ -107,6 +111,7 @@ func (t *TimerService) off() {
 }
 
 func (t *TimerService) on() {
+	t.switchable.On()
 	//on
 }
 

@@ -47,7 +47,7 @@ func Test_getAllTimers(t *testing.T) {
 
 	allTimers, _ := data.GetAllTimers()
 	result := allTimers[0].AtTime
-	if !result.Equal(now) {
+	if !result.Equal(*now) {
 		t.Errorf("expected %s, was: %s", now, result)
 	}
 
@@ -60,7 +60,7 @@ func Test_getAllTimers(t *testing.T) {
 
 	allTimers, _ = data.GetAllTimers()
 	result = allTimers[1].AtTime
-	if !result.Equal(now.Add(-time.Hour * 2)) {
+	if !result.Equal(*now.Add(-time.Hour * 2)) {
 		t.Errorf("expected %s, was: %s", now, result)
 	}
 
@@ -69,7 +69,7 @@ func Test_getAllTimers(t *testing.T) {
 func Test_files(t *testing.T) {
 	now := time.Now()
 	event := TimerActiveSpan{
-		AtTime:   now,
+		AtTime:   *clock.NewClock(now),
 		Duration: time.Second * 2,
 	}
 	arr := []TimerActiveSpan{event}
