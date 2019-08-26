@@ -10,6 +10,10 @@ type Switchable interface {
 	State() bool
 }
 
+func NewFakeSwitchable() *fakeSwitchable {
+	return &fakeSwitchable{Active: false}
+}
+
 type fakeSwitchable struct {
 	Active bool
 }

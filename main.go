@@ -4,14 +4,20 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"schedule/data"
+	"schedule/physical"
+	"schedule/service"
 )
 
 type modeResponse struct{ Mode bool }
 
+var db = data.NewDataAccess()
+
+var switchable = physical.NewFakeSwitchable()
+var service = service.NewTimerService(db, switchable)
 
 func main() {
 
-	service := 
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("/", func(res http.ResponseWriter, req *http.Request) {
@@ -29,7 +35,6 @@ func main() {
 	mux.HandleFunc("/mode", modeHandler)
 
 	http.ListenAndServe("0.0.0.0:8080", mux)
-
 }
 
 func modeHandler(res http.ResponseWriter, req *http.Request) {
@@ -41,19 +46,22 @@ func modeHandler(res http.ResponseWriter, req *http.Request) {
 	}
 }
 
-func putmode( res http.ResponseWriter, req *http.Request ) {
-	writeHeaders(res)
-	resBody := &modeResponse{Mode: true}
-	
-}
-
-func getMode(res http.ResponseWriter, req *http.Request) {
+func putMode(res http.ResponseWriter, req *http.Request) {
 	writeHeaders(res)
 	resBody := &modeResponse{Mode: true}
 	json, _ := json.Marshal(resBody)
 	res.Write(json)
+
 }
- 
+
+func getMode(res http.ResponseWriter, req *http.Request) {
+	writeHeaders(res)
+
+	resBody := &modeResponse{Mode: true}
+	json, _ := json.Marshal(resBody)
+	res.Write(json)
+}
+
 func writeHeaders(res http.ResponseWriter) {
 	headers := res.Header()
 	headers.Add("content-type", "application/json")

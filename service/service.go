@@ -32,6 +32,14 @@ type TimerService struct {
 	switchable               physical.Switchable
 }
 
+func NewTimerService(db data.DataAccess, switchable physical.Switchable) *TimerService {
+	t := &TimerService{
+		runningTimerStopChannels: make([]chan<- bool, 0),
+	}
+	t.Init(db, switchable)
+	return t
+}
+
 func (t *TimerService) cycleTimers() {
 	t.stopTimers()
 	t.startTimers()
@@ -45,9 +53,9 @@ func (t *TimerService) startTimers() {
 
 	i := 0
 	for _, e := range timers {
-		stopTime := *e.AtTime.Add(e.Duration)
+		stopTime := e.AtTime.Add(e.Duration)
 		t.runningTimerStopChannels[i] = runat.EachDayAt(e.AtTime, t.switchable.On)
-		t.runningTimerStopChannels[i+1] = runat.EachDayAt(stopTime, t.switchable.Off)
+		t.runningTimerStopChannels[i+1] = runat.EachDayAt(*stopTime, t.switchable.Off)
 		i += 2
 	}
 
@@ -68,6 +76,10 @@ func (t *TimerService) SetMode(mode TimerMode) {
 	case ModeTimed:
 		t.timed()
 	}
+}
+
+func (t *TimerService) GetMode() TimerMode {
+	return t.mode
 }
 
 func (t *TimerService) AddTimer(startTime clock.Clock, duration time.Duration) error {
@@ -103,14 +115,18 @@ func (t *TimerService) Init(db data.DataAccess, switchable physical.Switchable) 
 
 func (t *TimerService) off() {
 	//turn the relay off
+	t.mode = ModeOff
 	t.switchable.Off()
 }
 
 func (t *TimerService) on() {
 	//on
+	t.mode = ModeOn
+	t.switchable.On()
+
 }
 
 func (t *TimerService) timed() {
-	t.startTimers()
-	//timed
+	t.mode = ModeTimed
+	t.cycleTimers() //timed
 }
