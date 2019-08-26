@@ -6,9 +6,11 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"schedule/clock"
 	"schedule/data"
 	"schedule/physical"
 	"schedule/service"
+	"time"
 )
 
 type modeResponse struct{ Mode service.TimerMode }
@@ -16,16 +18,21 @@ type modeResponse struct{ Mode service.TimerMode }
 var serv *service.TimerService
 var mux http.ServeMux
 var LOGGER *log.Logger
+var storageFile os.File
 
 func main() {
 	LOGGER = log.New(os.Stdout, "controller/main: ", 0)
 	serv = &service.TimerService{}
-	serv.Init(data.NewDataAccess(), physical.NewFakeSwitchable(false))
+	storageFile, err := openFile("timer.dat")
+	if err != nil {
+		panic(err)
+	}
+	serv.Init(data.NewDataAccess(storageFile), physical.NewFakeSwitchable(false))
 
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("/mode", loggingHandler(modeHandler()))
-
+	serv.AddTimer(*clock.NewClock(time.Now()), 2*time.Hour)
 	http.ListenAndServe("0.0.0.0:8080", mux)
 }
 
@@ -80,4 +87,11 @@ func writeHeaders(res http.ResponseWriter) {
 	headers := res.Header()
 	headers.Add("content-type", "application/json")
 	res.WriteHeader(200)
+}
+
+func openFile(name string) (*os.File, error) {
+	dir := fmt.Sprintf("%s\\.heatingTimer", os.Getenv("HOME"))
+	os.Mkdir(dir, os.ModeDir)
+	filepath := fmt.Sprintf("%s\\%s", dir, name)
+	return os.OpenFile(filepath, os.O_CREATE|os.O_APPEND|os.O_RDWR, 0644)
 }

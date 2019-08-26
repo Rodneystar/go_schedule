@@ -1,9 +1,8 @@
 package data
 
 import (
+	"bytes"
 	"encoding/json"
-	"io/ioutil"
-	"log"
 	"os"
 	"schedule/clock"
 	"time"
@@ -21,14 +20,23 @@ type DataAccess interface {
 	DelAll() error
 }
 
-func NewDataAccess() DataAccess {
-	return &FileAccess{
-		filename: "timers.dat",
+func NewDataAccess(f *os.File) DataAccess {
+	fileaccess := &FileAccess{
+		file: f,
 	}
+	fileaccess.Init(f)
+	return fileaccess
+
 }
 
 type FileAccess struct {
-	filename string
+	file *os.File
+}
+
+func (da *FileAccess) writeAll(bs []byte) error {
+	da.file.Truncate(0)
+	_, err := da.file.Write(bs)
+	return err
 }
 
 func (da *FileAccess) RemoveByAtTime(t clock.Clock) error {
@@ -48,7 +56,7 @@ func (da *FileAccess) RemoveByAtTime(t clock.Clock) error {
 		return err
 	}
 
-	err = ioutil.WriteFile(da.filename, encoded, 0644)
+	err = da.writeAll(encoded)
 	if err != nil {
 		return err
 	}
@@ -56,12 +64,9 @@ func (da *FileAccess) RemoveByAtTime(t clock.Clock) error {
 
 }
 
-func (da *FileAccess) Init(filename string) {
-	da.filename = filename
-	err := da.createIfNotExist()
-	if err != nil {
-		log.Fatalf("%s -- error creating file if doesnt exist: %s", time.Now(), err)
-	}
+func (da *FileAccess) Init(f *os.File) {
+	da.file = f
+
 }
 
 func (da *FileAccess) DelAll() error {
@@ -69,30 +74,32 @@ func (da *FileAccess) DelAll() error {
 	if err != nil {
 		return err
 	}
-
-	err = ioutil.WriteFile(da.filename, empty, 0644)
+	da.file.Truncate(0)
+	_, err = da.file.Write(empty)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func (da *FileAccess) createIfNotExist() error {
-	if _, err := os.Stat(da.filename); os.IsNotExist(err) {
-		file, err := os.Create(da.filename)
-		if err != nil {
-			return err
+func (da *FileAccess) readAll() ([]byte, error) {
+	chunk := make([]byte, 64)
+	buffer := make([]byte, 0)
+	var err error
+	done := false
+	for i := 0; !done; {
+		i, err = da.file.Read(chunk)
+		if i == 0 || err != nil {
+			done = true
 		}
-		err = file.Close()
-		if err != nil {
-			return err
-		}
+		buffer = append(buffer, chunk...)
 	}
-	return nil
+	return buffer, err
 }
 
 func (da *FileAccess) GetAllTimers() ([]TimerActiveSpan, error) {
-	jsonIn, err := ioutil.ReadFile(da.filename)
+	bytes.NewBuffer(nil)
+	jsonIn, err := da.readAll()
 	if err != nil {
 		return nil, err
 	}
@@ -110,7 +117,7 @@ func (da *FileAccess) AddTimer(t TimerActiveSpan) error {
 	if err != nil {
 		return err
 	}
-	return ioutil.WriteFile(da.filename, encodedTimers, 0644)
+	return da.writeAll(encodedTimers)
 }
 
 func toJSON(event TimerActiveSpan) ([]byte, error) {
